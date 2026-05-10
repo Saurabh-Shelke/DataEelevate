@@ -57,11 +57,35 @@ function getFormSubmitActionUrl(): string | null {
   return u.href
 }
 
+function formSubmitInvisibleRedirectIsHomepage(res: Response): boolean {
+  const loc = res.headers.get('location')?.trim()
+  if (!loc) return false
+  try {
+    const u = new URL(loc)
+    const host = u.hostname.replace(/^www\./, '')
+    const path = (u.pathname.replace(/\/$/, '') || '/').toLowerCase()
+    return host === 'formsubmit.co' && path === '/'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * FormSubmit returns 302 for both real success and for invalid `/el/…` slugs
+ * (redirect to https://formsubmit.co). Treat homepage redirects as failure so
+ * mis-pasted activation URLs do not show a false “success”.
+ */
 function formSubmitInvisibleSuccess(res: Response): boolean {
-  return (
-    res.type === 'opaqueredirect' ||
-    (res.status >= 300 && res.status < 400)
-  )
+  if (res.type === 'opaqueredirect') {
+    return true
+  }
+  if (res.status < 300 || res.status >= 400) {
+    return false
+  }
+  if (formSubmitInvisibleRedirectIsHomepage(res)) {
+    return false
+  }
+  return true
 }
 
 /**
@@ -99,6 +123,12 @@ async function submitViaFormSubmitInvisible(
 
   if (formSubmitInvisibleSuccess(res)) {
     return
+  }
+
+  if (formSubmitInvisibleRedirectIsHomepage(res)) {
+    throw new Error(
+      'FormSubmit did not accept this form URL (it redirected to the FormSubmit home page). Use the exact https://formsubmit.co/el/… link from your FormSubmit activation email, or set VITE_WEB3FORMS_ACCESS_KEY.',
+    )
   }
 
   const raw = await res.text()

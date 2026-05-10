@@ -223,8 +223,7 @@ export const COMPANY_MODEL: CompanyModel = {
   ],
   headquarters: 'Pune, Maharashtra, India',
   linkedInUrl: 'https://www.linkedin.com/company/data-elevate-consulting/',
-  contactFormRecipientEmail: 'shelkesaurabh180@gmail.com',
-  formSubmitActionUrl: 'https://formsubmit.co/el/korida',
+  contactFormRecipientEmail: 'enquiry@dataelevateconsulting.in',
   location: {
     label: 'Headquarters — Pune',
     lines: [
